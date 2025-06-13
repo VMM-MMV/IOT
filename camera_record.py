@@ -1,31 +1,34 @@
 import cv2
 import subprocess
 
-def start_stream(rtsp_url="rtsp://localhost:8554/stream", camera_index=0):
+def start_stream(rtmp_url="rtmp://localhost/live/stream", camera_index=0):
     # Open the camera
     cap = cv2.VideoCapture(camera_index)
 
-    # Define ffmpeg command to push to RTSP
+    # Get width and height from the camera
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    # Define ffmpeg command to push to RTMP
     ffmpeg_cmd = [
         'ffmpeg',
         '-y',
         '-f', 'rawvideo',
         '-vcodec', 'rawvideo',
         '-pix_fmt', 'bgr24',
-        '-s', f"{int(cap.get(3))}x{int(cap.get(4))}",  # width x height
-        '-r', '25',  # frames per second
-        '-i', '-',  # Input from stdin
+        '-s', f"{width}x{height}",
+        '-r', '25',
+        '-i', '-',
         '-c:v', 'libx264',
         '-preset', 'veryfast',
-        '-f', 'rtsp',
-        '-rtsp_transport', 'tcp',  # Use TCP transport for more stable connections
-        rtsp_url
+        '-f', 'flv',
+        rtmp_url
     ]
 
     # Start ffmpeg subprocess
     process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
 
-    print(f"🚀 Streaming camera feed to {rtsp_url}")
+    print(f"🚀 Streaming camera feed to {rtmp_url}")
 
     try:
         while True:
